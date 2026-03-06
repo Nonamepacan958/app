@@ -1,2 +1,0 @@
-# app
-tg bot
