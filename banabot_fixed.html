@@ -1,0 +1,869 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>🍌 BANANA BOT - Port 8000</title>
+<link href="https://fonts.googleapis.com/css2?family=Bangers&family=Fredoka+One&family=Nunito:wght@400;600;700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#07050A;--s1:#0F0B18;--s2:#181228;--s3:#221A38;--s4:#2E2448;
+  --y1:#FFE040;--y2:#FFAB00;--y3:#FF6D00;
+  --g:#39FF9A;--b:#40C4FF;--p:#E040FB;
+  --text:#F3EEF9;--muted:#7B6FA0;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{width:100%;height:100%;overflow:hidden}
+body{background:var(--bg);color:var(--text);font-family:'Nunito',sans-serif;display:flex;flex-direction:column}
+canvas#stars{position:fixed;inset:0;z-index:0;pointer-events:none}
+/* TOP BAR */
+.topbar{position:relative;z-index:10;background:linear-gradient(180deg,#0F0B18,#07050Aaa);border-bottom:1px solid #2E2448;padding:7px 14px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;flex-shrink:0}
+.logo{font-family:'Bangers',cursive;font-size:1.55rem;letter-spacing:4px;background:linear-gradient(135deg,var(--y1),var(--y2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;white-space:nowrap}
+.stat{background:var(--s2);border:1px solid var(--s3);border-radius:18px;padding:4px 12px;font-weight:900;font-size:.82rem;display:flex;align-items:center;gap:5px;white-space:nowrap}
+.stat .v{font-family:'Fredoka One',cursive;font-size:.95rem;color:var(--y1)}
+.lvpill{background:linear-gradient(135deg,#FFE04022,#FFAB0011);border:1px solid #FFE04040;border-radius:18px;padding:4px 12px;font-weight:900;font-size:.82rem;color:var(--y1)}
+.xpw{flex:1;min-width:80px;max-width:160px}
+.xplbl{font-size:.58rem;color:var(--muted);margin-bottom:2px;font-weight:700}
+.xpb{background:var(--s3);border-radius:5px;height:6px;overflow:hidden}
+.xpbf{height:100%;background:linear-gradient(90deg,var(--y1),var(--y2));border-radius:5px;transition:width .4s cubic-bezier(.34,1.56,.64,1)}
+.nav{display:flex;gap:4px;margin-left:auto}
+.tab{background:var(--s2);border:1px solid var(--s3);border-radius:8px;padding:5px 10px;font-weight:900;font-size:.75rem;color:var(--muted);cursor:pointer;transition:all .2s;white-space:nowrap;font-family:'Nunito',sans-serif}
+.tab:hover{border-color:var(--y1);color:var(--y1)}
+.tab.on{background:linear-gradient(135deg,var(--y1),var(--y2));color:#0a0800;border-color:transparent}
+/* VIEWS */
+.view{display:none;flex:1;overflow-y:auto;overflow-x:hidden;padding:14px;position:relative;z-index:2}
+.view.on{display:flex;flex-direction:column}
+.view::-webkit-scrollbar{width:4px}.view::-webkit-scrollbar-thumb{background:var(--s4);border-radius:4px}
+/* CLICKER */
+.clicker-wrap{display:flex;flex-direction:column;align-items:center;gap:14px;padding:10px 0}
+.banner-info{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;width:100%;max-width:500px}
+.bi{background:var(--s1);border:1px solid var(--s3);border-radius:12px;padding:9px 6px;text-align:center}
+.bi .bv{font-family:'Fredoka One',cursive;font-size:1.05rem;color:var(--y1)}
+.bi .bl{font-size:.6rem;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-top:1px}
+.bi.hi .bv{color:var(--y3);text-shadow:0 0 10px var(--y3)}
+.banana-btn-wrap{position:relative;cursor:pointer;user-select:none}
+.banana-btn{font-size:clamp(5.5rem,20vw,9rem);line-height:1;display:block;filter:drop-shadow(0 0 20px #FFE04055);animation:bob 2.5s ease-in-out infinite}
+@keyframes bob{0%,100%{transform:translateY(0) rotate(-3deg)}50%{transform:translateY(-12px) rotate(3deg)}}
+.cps-bar{background:var(--s2);border:1px solid var(--s3);border-radius:20px;padding:5px 16px;font-size:.8rem;font-weight:700;color:var(--muted);display:flex;align-items:center;gap:8px}
+.cps-bar span{color:var(--y2);font-family:'Fredoka One',cursive}
+.upgrades{width:100%;max-width:500px}
+.uh{font-family:'Bangers',cursive;font-size:1.2rem;letter-spacing:2px;color:var(--y1);margin-bottom:10px}
+.upg{background:var(--s1);border:1.5px solid var(--s3);border-radius:12px;padding:11px 14px;display:flex;align-items:center;gap:12px;margin-bottom:7px;cursor:pointer;transition:all .2s}
+.upg:hover:not(.maxed):not(.cant){border-color:var(--y2);transform:translateX(3px)}
+.upg.maxed{border-color:#2d6a4f;opacity:.7;cursor:default}
+.upg.cant{opacity:.35;cursor:not-allowed}
+.upg-e{font-size:2rem;flex-shrink:0}
+.upg-info{flex:1;min-width:0}
+.upg-name{font-weight:900;font-size:.88rem}
+.upg-desc{font-size:.68rem;color:var(--muted);margin-top:1px}
+.upg-lv{font-size:.6rem;color:var(--g);font-weight:700;margin-top:2px}
+.upg-price{background:#0a0800;border:1px solid #3d2500;border-radius:14px;padding:3px 10px;font-weight:900;color:var(--y1);font-size:.82rem;white-space:nowrap;flex-shrink:0}
+/* CASES */
+.cases-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.ccase{background:var(--s1);border:1.5px solid var(--s3);border-radius:16px;padding:16px 10px;text-align:center;cursor:pointer;transition:all .25s;position:relative;overflow:hidden}
+.ccase:hover{border-color:var(--y1);transform:translateY(-4px);box-shadow:0 8px 30px #FFE04018}
+.ccase .ce{font-size:3rem;display:block;margin-bottom:6px}
+.ccase .cn{font-weight:900;font-size:.9rem;margin-bottom:4px}
+.ccase .cd{font-size:.7rem;color:var(--muted);margin-bottom:10px;line-height:1.4}
+.ccase .cp{display:inline-flex;align-items:center;gap:4px;background:#0a0800;border:1px solid #3d2500;border-radius:14px;padding:3px 11px;font-weight:900;color:var(--y1);font-size:.88rem}
+.ctag{position:absolute;top:7px;right:7px;font-size:.58rem;font-weight:900;padding:2px 7px;border-radius:12px;text-transform:uppercase}
+.tag-common{background:#4a5568;color:#e2e8f0}.tag-rare{background:#2b6cb0;color:#bee3f8}
+.tag-epic{background:#553c9a;color:#e9d8fd}.tag-legendary{background:#744210;color:#fefcbf}
+.tag-mythic{background:#702459;color:#fed7e2}
+/* DAILY */
+.daily-wrap{background:linear-gradient(135deg,#181228,#201535);border:1.5px solid #FFE04033;border-radius:16px;padding:18px;margin-bottom:18px}
+.daily-title{font-family:'Bangers',cursive;font-size:1.35rem;color:var(--y1);letter-spacing:2px;margin-bottom:12px}
+.daily-days{display:flex;gap:6px;flex-wrap:wrap}
+.dd{flex:1;min-width:62px;background:var(--s2);border:1.5px solid var(--s3);border-radius:10px;padding:8px 5px;text-align:center;transition:.25s;position:relative;cursor:default}
+.dd.today{border-color:var(--y1);cursor:pointer;animation:ddp 2s ease-in-out infinite}
+.dd.today:hover{transform:scale(1.07)}
+.dd.claimed{border-color:#2d6a4f;background:#0a2a1a}
+.dd.claimed::after{content:'✓';position:absolute;top:3px;right:5px;color:var(--g);font-size:.7rem;font-weight:900}
+.dd.locked{opacity:.25}
+@keyframes ddp{0%,100%{box-shadow:0 0 0 transparent}50%{box-shadow:0 0 14px #FFE04055}}
+.dd .dn{font-size:.62rem;color:var(--muted);font-weight:700;margin-bottom:2px}
+.dd .de{font-size:1.5rem}
+.dd .dr{font-size:.65rem;color:var(--y2);font-weight:700;margin-top:2px}
+.daily-hint{text-align:center;margin-top:10px;font-size:.8rem;color:var(--muted)}
+.daily-hint b{color:var(--y1)}
+.sh{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px}
+.sh-title{font-family:'Bangers',cursive;font-size:1.5rem;color:var(--y1);letter-spacing:2px}
+/* LEVELS */
+.levels-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(68px,1fr));gap:6px}
+.lv-cell{background:var(--s2);border:1.5px solid var(--s3);border-radius:10px;padding:8px 4px;text-align:center;transition:.2s}
+.lv-cell.done{border-color:#2d6a4f40;cursor:pointer}.lv-cell.done:hover{border-color:var(--y1);transform:scale(1.06)}
+.lv-cell.cur{border-color:var(--y1);background:var(--s3);animation:curlv 2s ease-in-out infinite}
+@keyframes curlv{0%,100%{box-shadow:0 0 8px #FFE04022}50%{box-shadow:0 0 20px #FFE04055}}
+.lv-cell.locked{opacity:.18}
+.lv-n{font-family:'Fredoka One',cursive;font-size:.72rem;color:var(--muted)}
+.lv-cell.done .lv-n,.lv-cell.cur .lv-n{color:var(--y1)}
+.lv-i{font-size:.95rem;margin-top:1px}
+.lv-r{font-size:.58rem;color:var(--muted);margin-top:1px}
+/* BOOK */
+.book-filters{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.bfi{background:var(--s2);border:1px solid var(--s3);border-radius:14px;padding:4px 12px;font-size:.76rem;font-weight:700;color:var(--muted);cursor:pointer;transition:.2s}
+.bfi.on,.bfi:hover{border-color:var(--y1);color:var(--y1)}
+.book-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(88px,1fr));gap:7px}
+.bc{background:var(--s1);border:1.5px solid var(--s3);border-radius:10px;padding:9px 5px;text-align:center;transition:.2s;position:relative}
+.bc.owned{border-color:#2d6a4f40}.bc.owned:hover{border-color:var(--y1);transform:translateY(-2px)}
+.bc.unknown{filter:brightness(.28);cursor:default}
+.bc .bce{font-size:1.9rem;display:block;line-height:1.2}
+.bc .bcn{font-weight:700;font-size:.66rem;margin-top:3px;line-height:1.3}
+.bc .bcr{font-size:.58rem;margin-top:2px}
+.bc .bcc{position:absolute;top:3px;right:4px;background:var(--y1);color:#0a0800;font-weight:900;font-size:.58rem;padding:2px 4px;border-radius:7px}
+.bc .bcl{position:absolute;top:3px;left:4px;background:var(--s3);color:var(--muted);font-size:.55rem;font-weight:700;padding:2px 4px;border-radius:7px}
+
+/* ─── CS2 CASE ANIMATION ─── */
+.case-anim{
+  position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:200;
+  display:none;flex-direction:column;align-items:center;justify-content:center;
+  backdrop-filter:blur(18px);padding:20px;
+}
+.case-anim.on{display:flex}
+.ca-title{
+  font-family:'Bangers',cursive;font-size:1.8rem;letter-spacing:3px;
+  color:var(--y1);margin-bottom:26px;text-align:center;
+  text-shadow:0 0 30px #FFE04088;
+}
+
+/* Reel container */
+.reel-outer{
+  position:relative;
+  width:min(700px,98vw);
+  user-select:none;
+}
+.ptr{
+  position:absolute;left:50%;transform:translateX(-50%);
+  width:0;height:0;z-index:10;
+}
+.ptr.top{
+  top:-2px;
+  border-left:12px solid transparent;border-right:12px solid transparent;
+  border-top:16px solid var(--y1);
+  filter:drop-shadow(0 0 6px var(--y1));
+}
+.ptr.bot{
+  bottom:-2px;
+  border-left:12px solid transparent;border-right:12px solid transparent;
+  border-bottom:16px solid var(--y1);
+  filter:drop-shadow(0 0 6px var(--y1));
+}
+
+.reel-wrap{
+  overflow:hidden;height:120px;border-radius:14px;
+  border:2px solid var(--s4);background:var(--s1);
+  position:relative;
+  box-shadow:0 0 40px #00000088,inset 0 0 20px #00000066;
+}
+/* Center highlight line */
+.reel-wrap::before{
+  content:'';position:absolute;left:50%;top:0;bottom:0;width:3px;
+  background:linear-gradient(180deg,transparent,var(--y1),transparent);
+  box-shadow:0 0 16px var(--y1),0 0 32px var(--y1);
+  z-index:5;transform:translateX(-50%);pointer-events:none;
+}
+/* Fade edges */
+.reel-wrap::after{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(90deg,var(--s1) 0%,transparent 18%,transparent 82%,var(--s1) 100%);
+  z-index:6;pointer-events:none;
+}
+/* Top/bottom scan lines */
+.reel-scan{
+  position:absolute;left:0;right:0;z-index:7;pointer-events:none;height:2px;
+  background:linear-gradient(90deg,transparent,#FFE04066,transparent);
+}
+.reel-scan.top{top:0}
+.reel-scan.bot{bottom:0}
+
+.reel{
+  display:flex;align-items:center;gap:6px;
+  position:absolute;top:0;bottom:0;left:0;
+  will-change:transform;
+  padding:8px 0;
+}
+.ri{
+  flex-shrink:0;width:100px;height:104px;border-radius:12px;border:2px solid;
+  background:var(--s2);display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:4px;
+  transition:box-shadow .3s, border-color .3s;
+  position:relative;overflow:hidden;
+}
+.ri::before{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(180deg,rgba(255,255,255,.04) 0%,transparent 50%);
+  pointer-events:none;
+}
+.ri.won{
+  box-shadow:0 0 0 3px var(--y1),0 0 30px var(--y1),0 0 60px #FFE04066!important;
+  border-color:var(--y1)!important;
+  animation:wonpulse .6s ease-in-out infinite alternate;
+}
+@keyframes wonpulse{
+  from{box-shadow:0 0 0 3px var(--y1),0 0 20px var(--y1);}
+  to{box-shadow:0 0 0 3px var(--y1),0 0 50px var(--y1),0 0 80px #FFE04044;}
+}
+.ri-e{font-size:2.4rem;line-height:1;filter:drop-shadow(0 2px 4px rgba(0,0,0,.5))}
+.ri-n{font-size:.5rem;font-weight:900;text-align:center;padding:0 5px;line-height:1.3;color:var(--text);max-width:90px}
+.ri-r{font-size:.46rem;font-weight:700;padding:2px 6px;border-radius:6px;letter-spacing:.3px}
+
+/* Spin button */
+.ca-spin-btn{
+  margin-top:24px;
+  background:linear-gradient(135deg,var(--y1),var(--y2));
+  color:#0a0800;border:none;border-radius:16px;
+  padding:15px 56px;font-family:'Bangers',cursive;
+  font-size:1.5rem;letter-spacing:3px;cursor:pointer;
+  transition:all .2s;
+  box-shadow:0 4px 30px #FFE04055,0 0 0 0 #FFE04033;
+}
+.ca-spin-btn:hover:not(:disabled){
+  transform:scale(1.06);
+  box-shadow:0 6px 40px #FFE04088;
+}
+.ca-spin-btn:disabled{opacity:.3;cursor:not-allowed;transform:none;box-shadow:none}
+
+.ca-skip{
+  margin-top:10px;background:transparent;color:var(--muted);
+  border:1px solid var(--s4);border-radius:10px;
+  padding:8px 24px;font-family:'Bangers',cursive;
+  font-size:1rem;letter-spacing:2px;cursor:pointer;transition:.2s;
+}
+.ca-skip:hover{color:var(--text);border-color:var(--muted)}
+
+/* WIN RESULT */
+.win-res{
+  display:none;flex-direction:column;align-items:center;gap:12px;
+  margin-top:20px;
+  animation:wrpop .5s cubic-bezier(.34,1.56,.64,1);
+}
+@keyframes wrpop{from{transform:scale(.4) translateY(20px);opacity:0}to{transform:scale(1) translateY(0);opacity:1}}
+.win-res.on{display:flex}
+.wr-e{
+  font-size:5.5rem;
+  filter:drop-shadow(0 0 32px var(--y1)) drop-shadow(0 0 16px #fff6);
+  animation:wrFloat 2s ease-in-out infinite;
+}
+@keyframes wrFloat{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-8px) scale(1.05)}}
+.wr-n{font-family:'Bangers',cursive;font-size:1.8rem;letter-spacing:2px;text-align:center;color:var(--text)}
+.wr-r{font-size:.9rem;font-weight:700;padding:5px 16px;border-radius:18px;letter-spacing:1px}
+.wr-btn{
+  margin-top:8px;
+  background:linear-gradient(135deg,var(--y1),var(--y2));
+  color:#0a0800;border:none;border-radius:14px;
+  padding:13px 42px;font-family:'Bangers',cursive;
+  font-size:1.3rem;letter-spacing:2px;cursor:pointer;transition:.2s;
+}
+.wr-btn:hover{transform:scale(1.06)}
+
+/* MODAL */
+.overlay{position:fixed;inset:0;background:#000c;z-index:100;display:none;align-items:center;justify-content:center;backdrop-filter:blur(8px)}
+.overlay.on{display:flex}
+.modal{background:var(--s2);border:1.5px solid var(--y1);border-radius:20px;padding:24px;width:min(500px,95vw);max-height:86vh;overflow-y:auto;box-shadow:0 0 60px #FFE04028;animation:mpop .3s cubic-bezier(.34,1.56,.64,1);position:relative}
+@keyframes mpop{from{transform:scale(.7);opacity:0}to{transform:scale(1);opacity:1}}
+.mh{font-family:'Bangers',cursive;font-size:1.8rem;letter-spacing:2px;color:var(--y1);text-align:center;margin-bottom:2px}
+.ms{text-align:center;color:var(--muted);font-size:.82rem;margin-bottom:14px}
+.mx{position:absolute;top:11px;right:11px;background:var(--s3);border:none;color:var(--muted);width:30px;height:30px;border-radius:50%;cursor:pointer;font-size:.9rem;transition:.2s;display:flex;align-items:center;justify-content:center}
+.mx:hover{background:#e53e3e;color:#fff}
+.dt{width:100%;border-collapse:collapse;margin-bottom:14px}
+.dt th{color:var(--muted);font-size:.68rem;text-transform:uppercase;padding:4px 6px;text-align:left;border-bottom:1px solid var(--s3)}
+.dt td{padding:7px 6px;border-bottom:1px solid #0002;font-size:.84rem}
+.dt tr:last-child td{border:none}
+.rdot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:4px;vertical-align:middle}
+.ob{width:100%;background:linear-gradient(135deg,var(--y1),var(--y2));color:#0a0800;border:none;border-radius:12px;padding:13px;font-family:'Bangers',cursive;font-size:1.3rem;letter-spacing:2px;cursor:pointer;transition:.2s}
+.ob:hover{transform:scale(1.03)}.ob:disabled{opacity:.3;cursor:not-allowed;transform:none}
+
+/* LEVEL UP */
+.lvlup{position:fixed;inset:0;z-index:300;background:#000e;backdrop-filter:blur(14px);display:none;flex-direction:column;align-items:center;justify-content:center;gap:12px}
+.lvlup.on{display:flex}
+.lu-t{font-family:'Bangers',cursive;font-size:1.6rem;letter-spacing:3px;color:var(--y2)}
+.lu-n{font-family:'Bangers',cursive;font-size:clamp(5rem,18vw,9rem);letter-spacing:5px;background:linear-gradient(135deg,var(--y1),var(--y2),var(--y3));-webkit-background-clip:text;-webkit-text-fill-color:transparent;animation:lup .5s cubic-bezier(.34,1.56,.64,1)}
+@keyframes lup{from{transform:scale(0) rotate(-10deg);opacity:0}to{transform:scale(1);opacity:1}}
+.lu-rw{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.lu-ch{background:var(--s2);border:1.5px solid var(--y1);border-radius:10px;padding:8px 14px;font-weight:900;font-size:.9rem;animation:chin .4s cubic-bezier(.34,1.56,.64,1) both}
+.lu-ch:nth-child(2){animation-delay:.1s}
+@keyframes chin{from{transform:scale(0);opacity:0}to{transform:scale(1);opacity:1}}
+.lu-nb{color:var(--muted);font-size:.85rem;text-align:center}
+.lu-nb b{color:var(--y2)}
+.lu-btn{background:linear-gradient(135deg,var(--y1),var(--y2));color:#0a0800;border:none;border-radius:12px;padding:12px 36px;font-family:'Bangers',cursive;font-size:1.35rem;letter-spacing:3px;cursor:pointer;transition:.2s;margin-top:6px}
+.lu-btn:hover{transform:scale(1.05)}
+
+/* FX */
+.ffx{position:fixed;pointer-events:none;z-index:999;font-weight:900;animation:ffxa .85s ease-out forwards;font-family:'Fredoka One',cursive}
+@keyframes ffxa{from{transform:translateY(0) scale(1.1);opacity:1}to{transform:translateY(-65px) scale(.7);opacity:0}}
+.cp{position:fixed;pointer-events:none;z-index:998;width:6px;height:6px;border-radius:2px;animation:cpa linear forwards}
+@keyframes cpa{from{transform:translateY(-10px) rotate(0);opacity:1}to{transform:translateY(108vh) rotate(720deg);opacity:0}}
+.notif{position:fixed;top:62px;left:50%;transform:translateX(-50%) translateY(-70px);background:var(--s2);border:1.5px solid var(--y1);border-radius:12px;padding:8px 20px;z-index:500;font-weight:900;font-size:.88rem;color:var(--y1);box-shadow:0 4px 20px #FFE04040;transition:transform .3s cubic-bezier(.34,1.56,.64,1);white-space:nowrap;pointer-events:none}
+.notif.on{transform:translateX(-50%) translateY(0)}
+@media(max-width:480px){.tab{padding:4px 8px;font-size:.7rem}.stat{padding:3px 9px;font-size:.75rem}.ri{width:82px}}
+</style>
+</head>
+<body>
+<canvas id="stars"></canvas>
+<div class="topbar">
+  <div class="logo">🍌 BANANA</div>
+  <div class="stat">🍌 <span class="v" id="HB">0</span></div>
+  <div class="stat">🪙 <span class="v" id="HC">0</span></div>
+  <div class="lvpill">Ур. <span id="HL">1</span></div>
+  <div class="xpw"><div class="xplbl">XP <span id="HXC">0</span>/<span id="HXM">500</span></div><div class="xpb"><div class="xpbf" id="HXF" style="width:0%"></div></div></div>
+  <div class="nav">
+    <button class="tab on" onclick="gv('click',this)">🍌 Кликер</button>
+    <button class="tab" onclick="gv('cases',this)">📦 Кейсы</button>
+    <button class="tab" onclick="gv('levels',this)">🗺️ Уровни</button>
+    <button class="tab" onclick="gv('book',this)">📖 Книга</button>
+  </div>
+</div>
+
+<div id="v-click" class="view on">
+  <div class="clicker-wrap">
+    <div class="banner-info">
+      <div class="bi hi"><div class="bv" id="bv-tc">0</div><div class="bl">Кликов</div></div>
+      <div class="bi"><div class="bv" id="bv-ban">0</div><div class="bl">Всего 🍌</div></div>
+      <div class="bi"><div class="bv" id="bv-cpc">+1</div><div class="bl">За клик</div></div>
+      <div class="bi"><div class="bv" id="bv-combo">x1</div><div class="bl">Комбо</div></div>
+    </div>
+    <div class="banana-btn-wrap" onclick="doClick(event)">
+      <span class="banana-btn" id="banemo">🍌</span>
+    </div>
+    <div class="cps-bar">🌀 Авто: <span id="autocps">0</span>/сек</div>
+    <div class="upgrades" id="upglist"><div class="uh">⬆️ УЛУЧШЕНИЯ</div></div>
+  </div>
+</div>
+
+<div id="v-cases" class="view">
+  <div class="daily-wrap">
+    <div class="daily-title">🎁 Ежедневки <span id="dlbl" style="font-size:.82rem;color:var(--muted);font-family:'Nunito';font-weight:700;letter-spacing:0"></span></div>
+    <div class="daily-days" id="ddays"></div>
+    <div class="daily-hint" id="dhint"></div>
+  </div>
+  <div class="sh"><span class="sh-title">📦 КЕЙСЫ</span></div>
+  <div class="cases-grid" id="cgrid"></div>
+</div>
+
+<div id="v-levels" class="view">
+  <div style="text-align:center;margin-bottom:14px">
+    <span style="font-family:'Bangers',cursive;font-size:1.8rem;color:var(--y1);letter-spacing:2px">🗺️ 500 УРОВНЕЙ</span>
+    <span style="margin-left:10px;color:var(--muted);font-size:.82rem">Текущий: <b style="color:var(--y1)" id="curl">1</b></span>
+  </div>
+  <div class="levels-grid" id="lgrid"></div>
+</div>
+
+<div id="v-book" class="view">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+    <span style="font-family:'Bangers',cursive;font-size:1.7rem;color:var(--y1);letter-spacing:2px">📖 500 БАНАНОВ</span>
+    <span style="color:var(--muted);font-size:.82rem">Собрано: <b style="color:var(--y1)" id="oc">0</b>/500</span>
+  </div>
+  <div class="book-filters">
+    <button class="bfi on" onclick="bkF('all',this)">Все</button>
+    <button class="bfi" onclick="bkF('common',this)">Обычные</button>
+    <button class="bfi" onclick="bkF('uncommon',this)">Элементальные</button>
+    <button class="bfi" onclick="bkF('rare',this)">Металл/Техно</button>
+    <button class="bfi" onclick="bkF('epic',this)">Космические</button>
+    <button class="bfi" onclick="bkF('legendary',this)">Легендарные</button>
+    <button class="bfi" onclick="bkF('mythic',this)">Мифические</button>
+    <button class="bfi" onclick="bkF('owned',this)">Есть</button>
+  </div>
+  <div class="book-grid" id="bgrid"></div>
+</div>
+
+<!-- CASE MODAL -->
+<div class="overlay" id="cmod">
+  <div class="modal">
+    <button class="mx" onclick="closeMod()">✕</button>
+    <div class="mh" id="mh2"></div>
+    <div class="ms" id="ms2"></div>
+    <table class="dt"><thead><tr><th>Редкость</th><th>Тип</th><th>Шанс</th></tr></thead><tbody id="dtb"></tbody></table>
+    <button class="ob" id="ob" onclick="startSpin()">🎰 ОТКРЫТЬ</button>
+  </div>
+</div>
+
+<!-- CS2 CASE ANIMATION -->
+<div class="case-anim" id="caAnim">
+  <div class="ca-title" id="caTitle">📦 Открытие кейса</div>
+  <div class="reel-outer">
+    <div class="ptr top"></div>
+    <div class="ptr bot"></div>
+    <div class="reel-wrap" id="reelWrap">
+      <div class="reel-scan top"></div>
+      <div class="reel-scan bot"></div>
+      <div class="reel" id="reel"></div>
+    </div>
+  </div>
+  <button class="ca-spin-btn" id="spinBtn" onclick="triggerSpin()" disabled>🎰 Вращать!</button>
+  <button class="ca-skip" id="skipBtn" onclick="skipSpin()" style="display:none">⏩ Пропустить</button>
+  <div class="win-res" id="winRes">
+    <div class="wr-e" id="wrE"></div>
+    <div class="wr-n" id="wrN"></div>
+    <div class="wr-r" id="wrR"></div>
+    <button class="wr-btn" onclick="collectWin()">✅ ЗАБРАТЬ</button>
+  </div>
+</div>
+
+<!-- LEVEL UP -->
+<div class="lvlup" id="lvlup">
+  <div class="lu-t">НОВЫЙ УРОВЕНЬ!</div>
+  <div class="lu-n" id="lu-n">2</div>
+  <div class="lu-rw" id="lu-rw"></div>
+  <div class="lu-nb" id="lu-nb"></div>
+  <button class="lu-btn" onclick="closeLU()">ВПЕРЁД! 🍌</button>
+</div>
+<div class="notif" id="ntf"></div>
+
+<script>
+// ══════════════════════════════════════════
+// RARITY
+// ══════════════════════════════════════════
+const RR={
+  common:   {l:'Обычный',      c:'#A0AEC0'},
+  uncommon: {l:'Элементальный',c:'#68D391'},
+  rare:     {l:'Металл/Техно', c:'#63B3ED'},
+  epic:     {l:'Космический',  c:'#B794F4'},
+  legendary:{l:'Легендарный',  c:'#FFD700'},
+  mythic:   {l:'Мифический',   c:'#FF6DD5'},
+};
+
+// ══════════════════════════════════════════
+// BANANAS (500)
+// ══════════════════════════════════════════
+const BNAMES=[
+'Обычный банан','Зелёный банан','Спелый банан','Маленький банан','Большой банан','Яркий банан','Сладкий банан','Тропический банан','Банан новичка','Банан игрока','Жёлтый банан','Банан солнца','Банан острова','Банан ветра','Банан воды','Банан земли','Банан огня','Банан молнии','Банан энергии','Банан силы','Банан скорости','Банан удачи','Банан приключений','Банан джунглей','Банан пальмы','Банан пляжа','Банан океана','Банан кораллов','Банан волны','Банан песка','Банан тепла','Банан света','Банан сияния','Банан звёзд','Банан луны','Банан рассвета','Банан заката','Банан неба','Банан облаков','Банан дождя','Банан радуги','Банан грома','Банан бури','Банан тумана','Банан холода','Банан льда','Банан мороза','Банан зимы','Снежный банан','Ледяной банан',
+'Кристальный банан','Банан кристалла','Банан айсберга','Банан ледяной горы','Банан искры','Электрический банан','Банан разряда','Банан тока','Банан напряжения','Банан молнии II','Огненный банан','Банан лавы','Банан вулкана','Банан пламени','Банан магмы','Банан жара','Банан солнечного тепла','Банан огненной искры','Банан первородного огня','Банан солнечного сияния','Банан магии','Банан волшебства','Банан тайны','Банан энергии ветра','Банан энергии воды','Банан энергии земли','Банан энергии огня','Банан искр энергии','Банан природной силы','Банан природной энергии','Банан камня','Банан скалы','Банан горы','Банан долины','Банан леса','Банан дерева','Банан листвы','Банан травы','Банан природы','Банан природной мощи','Банан песчаной бури','Банан сильного ветра','Банан океанской волны','Банан глубины','Банан кристальной силы','Банан редкости','Банан эпической силы','Банан сияющего кристалла','Банан яркой энергии','Эпический банан',
+'Железный банан','Стальной банан','Серебряный банан','Платиновый банан','Алмазный банан','Титановый банан','Хромовый банан','Никелевый банан','Бронзовый банан','Медный банан','Механический банан','Робо-банан','Кибер-банан','Банан процессора','Банан данных','Банан системы','Банан сервера','Банан сети','Банан кода','Банан программы','Банан алгоритма','Банан процессора X','Банан мегапроцессора','Банан ИИ','Банан цифровой энергии','Банан цифрового ядра','Банан техно-силы','Банан техно-энергии','Банан будущего','Банан техно-легенды','Банан матрицы','Банан квантового ядра','Банан нейросети','Банан цифрового кода','Банан глобальной сети','Банан интернета','Банан мегасети','Банан ультра-процессора','Банан мега-системы','Банан хакера','Банан протокола','Банан файервола','Банан шифрования','Банан декодера','Банан компилятора','Банан дебаггера','Банан виртуальной машины','Банан облака','Банан суперкомпьютера','Банан квантового компьютера','Металл-Омега I','Металл-Омега II','Металл-Омега III','Кибер-Альфа','Кибер-Бета','Кибер-Гамма','Нано-банан','Плазменный банан','Лазерный банан','Фотонный банан','Квантовый банан','Ядерный банан','Банан темной материи','Банан антиматерии','Банан нейтрино','Банан кварка','Банан бозона','Банан фермиона','Банан протона','Банан нейтрона','Банан электрона','Банан позитрона','Банан гравитации','Банан электромагнетизма','Банан сильного взаимодействия','Банан слабого взаимодействия','Банан тёмной энергии','Банан вакуума','Банан пространства-времени','Банан сингулярности','Банан горизонта событий','Банан ядра чёрной дыры','Банан M-теории','Банан струн','Банан суперсимметрии','Банан размерности','Банан мультивселенной','Банан планка','Техно-Легенда I','Техно-Легенда II','Техно-Легенда III','Техно-Легенда IV','Техно-Легенда V','Ультра-Металл I','Ультра-Металл II','Ультра-Металл III','Ультра-Металл IV','Ультра-Металл V','Ультра-Металл VI','Ультра-Металл VII','Ультра-Металл VIII','Ультра-Металл IX','Ультра-Металл X',
+'Банан космоса','Банан орбиты','Банан спутника','Банан астероида','Банан кометы','Банан метеора','Банан галактики','Банан туманности','Банан звёздной пыли','Банан суперновы','Банан звёздного ветра','Банан космической энергии','Банан звёздной энергии','Банан космической силы','Банан межзвёздного света','Банан пульсара','Банан квазара','Банан нейтронной звезды','Банан белого карлика','Банан красного гиганта','Банан голубого сверхгиганта','Банан жёлтого карлика','Банан коричневого карлика','Банан чёрной дыры','Банан червоточины','Банан параллельной вселенной','Банан временного разрыва','Банан потока времени','Банан вечного момента','Банан точки бифуркации','Банан тёмного коридора','Банан тёмного потока','Банан антиматерии Космос','Банан нуклеосинтеза','Банан большого взрыва','Банан инфляции','Банан реликтового излучения','Банан крупной структуры','Банан пустоты','Банан суперкластера','Банан Большого аттрактора','Банан Ланиакеи','Банан Местной группы','Банан Андромеды','Банан Млечного пути','Банан галактического центра','Банан звёздного скопления','Банан шарового скопления','Банан Плеяд','Банан Ориона','Банан Большой Медведицы','Банан Сириуса','Банан Бетельгейзе','Банан Вега','Банан Альтаир','Банан Денеб','Банан Антарес','Банан Полярной звезды','Банан Ригеля','Банан Капеллы','Банан Альдебарана','Банан Проциона','Космо-Альфа I','Космо-Альфа II','Космо-Альфа III','Космо-Бета I','Космо-Бета II','Космо-Бета III','Космо-Гамма I','Космо-Гамма II','Космо-Гамма III','Космо-Дельта I','Туманность Орла','Туманность Криль','Туманность Конская Голова','Туманность Кошачий Глаз','Туманность Бабочка','Туманность Планетарная','Туманность Улитка','Туманность Кольцо','Туманность Гантель','Туманность Черепаха','Банан экзопланеты','Банан горячего Юпитера','Банан суперземли','Банан океанической планеты','Банан пустынной планеты','Банан ледяной планеты','Банан вулканической планеты','Банан газового гиганта','Банан каменной планеты','Банан водородной планеты','Космо-Легенда I','Космо-Легенда II','Космо-Легенда III','Космо-Легенда IV','Космо-Легенда V','Космо-Легенда VI','Космо-Легенда VII','Космо-Легенда VIII','Космо-Легенда IX','Космо-Легенда X','Космо-Легенда XI','Космо-Легенда XII','Космо-Легенда XIII','Космо-Легенда XIV','Космо-Легенда XV','Космо-Легенда XVI','Космо-Легенда XVII','Космо-Легенда XVIII','Космо-Легенда XIX','Космо-Легенда XX','Космо-Легенда XXI','Космо-Легенда XXII','Космо-Легенда XXIII','Космо-Легенда XXIV','Космо-Легенда XXV','Космо-Легенда XXVI','Космо-Легенда XXVII','Космо-Легенда XXVIII','Космо-Легенда XXIX','Космо-Легенда XXX','Космо-Легенда XXXI','Космо-Легенда XXXII','Космо-Легенда XXXIII','Космо-Легенда XXXIV','Космо-Легенда XXXV','Космо-Легенда XXXVI','Космо-Легенда XXXVII','Космо-Легенда XXXVIII','Космо-Легенда XXXIX','Космо-Легенда XL',
+'Банан бесконечной энергии','Банан ультра силы','Банан мегасвета','Банан космического сияния','Банан абсолютной энергии','Банан вечности','Банан бессмертия','Банан всемогущества','Банан всеведения','Банан вездесущности','Банан первопричины','Банан последнего слова','Банан альфы','Банан омеги','Банан начала','Банан конца','Банан цикла','Банан спирали','Банан фракталя','Банан рекурсии','Банан парадокса','Банан симметрии','Банан гармонии','Банан резонанса','Банан частоты','Банан амплитуды','Банан фазы','Банан интерференции','Банан дифракции','Банан поляризации','Банан синего огня','Банан красного огня','Банан зелёного огня','Банан фиолетового огня','Банан золотого огня','Банан серебряного огня','Банан бронзового огня','Банан платинового огня','Банан алмазного огня','Банан рубинового огня','Банан сапфирового огня','Банан изумрудного огня','Банан янтарного огня','Банан кораллового огня','Банан обсидиана','Банан мрамора','Банан гранита','Банан кварца','Банан малахита','Банан лазурита','Банан нефрита','Банан опала','Банан жемчуга','Банан аквамарина','Банан аметиста','Банан топаза','Банан граната','Банан шпинели','Банан турмалина','Банан циркония','Банан сердолика','Банан авантюрина','Банан тигрового глаза','Банан гематита','Банан лабрадора','Банан лунного камня','Банан солнечного камня','Банан метеоритный','Банан тектита','Банан перидота','Банан гипноза','Банан иллюзии','Банан сна','Банан пророчества','Банан судьбы','Банан кармы','Банан нирваны','Банан просветления','Банан мудрости','Банан знания','Банан осознания','Банан пробуждения','Банан чистого разума','Банан чистой воли','Банан чистой силы','Банан чистого света','Банан абсолюта','Банан бесконечного пространства','Банан бесконечного времени','Банан вне существования','Банан первичного хаоса','Банан первичного порядка','Банан первичного сознания','Банан первичной материи','Банан первичного духа','Банан первичного огня','Банан первичного света','Банан первичной тьмы','Банан первичного пустого','Банан мета-реальности','Банан гипер-реальности','Банан ультра-реальности','Банан трансцендентный','Банан имманентный','Банан абсолютный','Банан совершенный','Банан конечный','Банан бесконечный','Банан временный','Банан вечный','Банан первобытный','Банан запредельный','Банан непостижимый','Банан невидимый','Банан неслышимый','Банан неосязаемый','Банан непознаваемый','Банан несуществующий','Банан всесущий','Банан всеобъемлющий','Банан всепроникающий','Банан всепобеждающий','Банан всевидящий','Банан всезнающий','Банан всесильный','Банан всеблагой','Банан всемилостивый','Банан вселюбящий','Банан всетворящий','Банан всеразрушающий','Банан всеобновляющий','Банан всеисцеляющий','Банан всеспасающий','Банан всеединый','Банан всецелый','Банан всегармоничный','Банан всесовершенный','Банан всебесконечный','Банан надличностный','Банан надмировой','Банан надвременной','Банан надпространственный','Банан надсознательный','Банан сверхличностный','Банан сверхмировой','Банан сверхвременной','Банан сверхпространственный','Банан сверхсознательный',
+'Золотой банан легенды'
+];
+
+const EMOA=[...new Intl.Segmenter().segment('🍌🌿✨🫙🍌⭐🌸🌴🐣🎮💛☀️🏝️🌬️💧🪨🔥⚡⚡💪🌀🍀🎒🌳🌴🏖️🌊🪸🌊⛱️🌡️💡🌟⭐🌙🌅🌇🌤️☁️🌧️🌈🌩️⛈️🌫️❄️🧊❄️⛄🌨️🧊💎🔷🏔️⛰️⚡⚡🔋⚡🔌⚡🔥🌋🌋🔥🌋🌡️☀️✨🔥☀️✨🪄🔮🌪️🌊🪨🔥⚡🌿🌿🪨🪨⛰️🏔️🌲🌳🍃🌿🌿💚🌪️💨🌊🌊💎✨💥💎⚡🌟⚙️🔩🥈💠💎🔧🔬🔩🥉🪙⚙️🤖💻💾📊🖥️🔗💻📱🧮💾🖥️🤖⚡💿🔋⚡🚀🏆💻🔮🤖💡🌐📡🌐⚙️🖥️💻📡🔒🔑🔄⚙️🐛💻☁️💻🔮🏅🏅🏅🏅🔬⚡💡🔮⚛️🌑⚛️⚛️⚛️⚛️⚛️⚛️⚛️⚛️⚛️🌌💫⚛️⚛️🌌🌌🌌🌌⚛️🌌⚛️⚛️⚛️⚛️🌌🌌🌌♾️🔢🔢🏆🏆🏆🏆🏆🏅🏅🏅💠💠🌌🪐🛰️🪨☄️🌠🌌🌫️✨💥🌬️⚡⭐💪💫💫🔭💫⭐🔴🔵🟡🟤⚫🕳️🌀⏰🌊⌛🔀🌑🌌⚛️💥💥💥📡🌌🕳️⭐🌌🌌🌌🌌🌌🌌🌌🌌🌌🌌✨✨✨✨✨✨✨✨✨✨🌟💫⭐🌟💫⭐🌟💫⭐🌟💫⭐🌟💫⭐🌟💫⭐🌟💫🔭🔭🔭🔭🔭🌌🌌🌌🌌🌌🌌🌌🌌🌌🌌🌌🌌🌌🌌🌌🌍🪐🌍🌊🏜️🧊🌋🪐🪨🌌🌌🌌🌌🌌🌌🌌🌌🌌🌌🌌🌌🌌🌌🌌🌌🌌🌌🌌🌌🌌🌌🌌🌌🌌🌌🌌🌌🌌🌌🌌🌌🌌🌌🌌🌌🌌🌌🌌🌌🌌🌌🌌🌌🌌🌌🌌🌌🌌🌌🌌🌌🌌🌌🌌🌌🌌🌌🌌🌌🌌🌌🌌🌌🌌🌌🌌🌌🌌🌌🌌🌌🌌🌌🌌🌌🌌🌌🌌🌌⚡💪💡✨⚡♾️👑💎👁️🌍🌱🔚🌀🔯🌀🔚🔄🌀🎯🔁❓⚖️🎵📳📶📈🎛️🌊💫🌈🎨🌈🌈⬜⬛🩶🔵🔴🟢🟣🟡⚪🟫🤍💠❤️🧡💛💚💙💜🖤🤎❤️‍🔥🪩💎💎💎💎💎🔴🔵💚🟡🔮🏺🪩🔮🔮🌈🪨🪨🪨🪨🔮🪩🔮🌕🌑🌟🌕☀️🌑🪩💫💎💎💎💎💎💤🔮💡👁️💫💤😱☀️🔮📜🎯🌀⚡🔱✨💡📖🧠👁️⚡🧠💪⚡❤️☀️♾️🌌⏳💭🌀💭🌑🔥⚖️💡⚡💫✨🌟🌈🌌🌌🌌🌌🌌🌌🌌🌌🌌🌌🌌🌌🌌🌌🌌🌌🌌🌌🌌🌌🌌🌌🌌🌌🌌🌌🌌🌌🌌🌌🌌🌌🌌🌌🌌🌌🌌🌌🌌🌌🌌🌌🌌🌌🌌🌌🌌🌌🌌🌌🏆')].map(x=>x.segment);
+
+const BANS=BNAMES.map((n,i)=>{
+  let r,ulv;
+  if(i<50)     {r='common';   ulv=Math.max(1,i*2);}
+  else if(i<100){r='uncommon';ulv=50+Math.floor((i-50)*2.5);}
+  else if(i<200){r='rare';    ulv=150+Math.floor((i-100)*1.5);}
+  else if(i<350){r='epic';    ulv=250+Math.floor((i-200)*1.2);}
+  else if(i<499){r='legendary';ulv=430+Math.floor((i-350)*0.35);}
+  else          {r='mythic';  ulv=500;}
+  if(i===499)ulv=500;
+  return{id:'b'+i,e:EMOA[i]||'🍌',n,r,ulv};
+});
+
+// ══════════════════════════════════════════
+// 500 LEVELS
+// ══════════════════════════════════════════
+function lvXP(lv){return Math.floor(500*Math.pow(1.24,lv-1));}
+const LEVELS=Array.from({length:500},(_,i)=>{
+  const lv=i+1;
+  return{lv,xpN:lvXP(lv),banR:Math.floor(lv*3+Math.pow(lv,1.45)*0.9),coinR:Math.floor(lv*8+Math.pow(lv,1.6)*0.4),unB:BANS.find(b=>b.ulv===lv)||null};
+});
+
+// ══════════════════════════════════════════
+// CASES
+// ══════════════════════════════════════════
+const CASES=[
+  {id:'c0',e:'📦',n:'Обычный ящик',   tag:'common',   price:300,   d:'Обычные и элементальные',  drops:[{r:'common',w:72},{r:'uncommon',w:28}]},
+  {id:'c1',e:'💎',n:'Редкий ящик',    tag:'rare',     price:1200,  d:'Элементальные и металл',   drops:[{r:'uncommon',w:55},{r:'rare',w:45}]},
+  {id:'c2',e:'💠',n:'Эпический ящик', tag:'epic',     price:5000,  d:'Металл/Техно и космос',    drops:[{r:'rare',w:55},{r:'epic',w:45}]},
+  {id:'c3',e:'👑',n:'Легендарный',    tag:'legendary',price:20000, d:'Космос и легендарные',     drops:[{r:'epic',w:60},{r:'legendary',w:40}]},
+  {id:'c4',e:'🌸',n:'Мифический',     tag:'mythic',   price:80000, d:'Только легенды и мифы',   drops:[{r:'legendary',w:70},{r:'mythic',w:30}]},
+];
+
+// ══════════════════════════════════════════
+// DAILY
+// ══════════════════════════════════════════
+const DAILYG=[
+  {e:'🍌',r:'+150 🍌',t:'ban',v:150},
+  {e:'🪙',r:'+300 🪙',t:'coin',v:300},
+  {e:'📦',r:'Обычный ящик',t:'case',v:'c0'},
+  {e:'🍌',r:'+800 🍌',t:'ban',v:800},
+  {e:'💎',r:'Редкий ящик',t:'case',v:'c1'},
+  {e:'🍌',r:'+3000 🍌',t:'ban',v:3000},
+  {e:'💠',r:'Эпический ящик!',t:'case',v:'c2'},
+];
+
+// ══════════════════════════════════════════
+// UPGRADES
+// ══════════════════════════════════════════
+const UPGRADES=[
+  {id:'u0',e:'👆',name:'Сильный палец',     desc:'×2 бананов за клик',      base:800,    coeff:3.5, maxLv:20},
+  {id:'u1',e:'🤖',name:'Авто-обезьяна',     desc:'+1 банан/сек',             base:3000,   coeff:4.2, maxLv:20},
+  {id:'u2',e:'🌴',name:'Банановая плантация',desc:'+8 бананов/сек',          base:20000,  coeff:4.5, maxLv:15},
+  {id:'u3',e:'🏭',name:'Банановый завод',    desc:'+35 бананов/сек',          base:100000, coeff:5.0, maxLv:10},
+  {id:'u4',e:'🚀',name:'Космическая ферма',  desc:'+200 бананов/сек',         base:600000, coeff:5.5, maxLv:8},
+  {id:'u5',e:'🌌',name:'Галактическая сеть', desc:'+1000 бананов/сек',        base:3000000,coeff:6.5, maxLv:5},
+];
+
+// ══════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════
+let S=JSON.parse(localStorage.getItem('bns8')||'null')||{lv:1,xp:0,ban:0,coins:0,coll:{},totalClicks:0,upgrades:{},autoCps:0,cpc:1,combo:1};
+let DL=JSON.parse(localStorage.getItem('bndl8')||'{"streak":0,"last":null,"claimed":[]}');
+const sv=()=>localStorage.setItem('bns8',JSON.stringify(S));
+const sdl=()=>localStorage.setItem('bndl8',JSON.stringify(DL));
+
+function recalc(){
+  S.autoCps=0;S.cpc=1;
+  UPGRADES.forEach(u=>{
+    const lv=S.upgrades[u.id]||0;if(!lv)return;
+    if(u.id==='u0')S.cpc=Math.max(1,Math.floor(Math.pow(2,lv)));
+    else{const m={'u1':1,'u2':8,'u3':35,'u4':200,'u5':1000};S.autoCps+=(m[u.id]||0)*lv;}
+  });
+}
+recalc();
+
+// ══════════════════════════════════════════
+// HUD
+// ══════════════════════════════════════════
+const fmt=n=>{n=Math.floor(n);if(n>=1e15)return(n/1e15).toFixed(1)+'Qa';if(n>=1e12)return(n/1e12).toFixed(1)+'T';if(n>=1e9)return(n/1e9).toFixed(1)+'B';if(n>=1e6)return(n/1e6).toFixed(1)+'M';if(n>=1e3)return(n/1e3).toFixed(1)+'K';return n;};
+
+function hud(){
+  document.getElementById('HB').textContent=fmt(S.ban);
+  document.getElementById('HC').textContent=fmt(S.coins);
+  document.getElementById('HL').textContent=S.lv;
+  document.getElementById('curl').textContent=S.lv;
+  const cl=LEVELS[Math.min(S.lv-1,499)],nl=LEVELS[Math.min(S.lv,499)];
+  const base=cl.xpN,top=nl?nl.xpN:cl.xpN*1e9,cur=S.xp-base,range=top-base;
+  document.getElementById('HXC').textContent=fmt(Math.max(0,cur));
+  document.getElementById('HXM').textContent=fmt(range);
+  document.getElementById('HXF').style.width=Math.max(0,Math.min(100,cur/range*100))+'%';
+  document.getElementById('bv-tc').textContent=fmt(S.totalClicks);
+  document.getElementById('bv-ban').textContent=fmt(S.ban);
+  document.getElementById('bv-cpc').textContent='+'+fmt(S.cpc*S.combo);
+  document.getElementById('bv-combo').textContent='x'+S.combo;
+  document.getElementById('autocps').textContent=fmt(S.autoCps);
+}
+
+// ══════════════════════════════════════════
+// VIEWS
+// ══════════════════════════════════════════
+function gv(v,el){
+  document.querySelectorAll('.view').forEach(x=>x.classList.remove('on'));
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('on'));
+  document.getElementById('v-'+v).classList.add('on');el.classList.add('on');
+  if(v==='levels')renderLevels();
+  if(v==='book')renderBook(bkf);
+  if(v==='cases'){renderDaily();renderCases();}
+  if(v==='click')renderUpgrades();
+}
+
+// ══════════════════════════════════════════
+// CLICKER
+// ══════════════════════════════════════════
+let cTimer=null;
+function doClick(e){
+  const gain=S.cpc*S.combo;
+  S.ban+=gain;S.coins+=Math.max(1,Math.floor(gain*0.04));
+  S.xp+=Math.max(1,Math.floor(gain*0.25));
+  S.totalClicks++;
+  S.combo=Math.min(S.combo+1,12);
+  clearTimeout(cTimer);cTimer=setTimeout(()=>{S.combo=1;hud();},2200);
+  floatFx('+'+fmt(gain)+'🍌',e.clientX,e.clientY,'#FFE040');
+  const b=document.getElementById('banemo');
+  b.style.cssText='transform:scale(.83);filter:drop-shadow(0 0 40px #FFE040AA);animation:none';
+  setTimeout(()=>b.style.cssText='',100);
+  checkLvlUp();hud();sv();
+}
+setInterval(()=>{
+  if(S.autoCps>0){S.ban+=S.autoCps*0.2;S.xp+=S.autoCps*0.01;checkLvlUp();hud();}
+},200);
+
+function renderUpgrades(){
+  document.getElementById('upglist').innerHTML='<div class="uh">⬆️ УЛУЧШЕНИЯ</div>'+UPGRADES.map(u=>{
+    const lv=S.upgrades[u.id]||0,maxed=lv>=u.maxLv,price=Math.floor(u.base*Math.pow(u.coeff,lv)),cant=!maxed&&S.ban<price;
+    return`<div class="upg${maxed?' maxed':cant?' cant':''}" onclick="buyU('${u.id}')">
+      <div class="upg-e">${u.e}</div>
+      <div class="upg-info"><div class="upg-name">${u.name}</div><div class="upg-desc">${u.desc}</div>
+      <div class="upg-lv">${maxed?'МАКС ✅':`Ур.${lv}/${u.maxLv}`}</div></div>
+      <div class="upg-price">${maxed?'✅':fmt(price)+'🍌'}</div></div>`;
+  }).join('');
+}
+function buyU(id){
+  const u=UPGRADES.find(x=>x.id===id),lv=S.upgrades[id]||0;
+  if(lv>=u.maxLv)return;
+  const price=Math.floor(u.base*Math.pow(u.coeff,lv));
+  if(S.ban<price){notif('❌ Мало бананов!');return;}
+  S.ban-=price;S.upgrades[id]=lv+1;recalc();renderUpgrades();hud();sv();
+  notif(`✅ ${u.name} Ур.${S.upgrades[id]}!`);
+}
+
+// ══════════════════════════════════════════
+// LEVEL UP
+// ══════════════════════════════════════════
+let luQ=[];
+function checkLvlUp(){
+  if(S.lv>=500)return;
+  const nl=LEVELS[Math.min(S.lv,499)];
+  if(nl&&S.xp>=nl.xpN){
+    S.lv++;const ld=LEVELS[S.lv-1];
+    S.ban+=ld.banR;S.coins+=ld.coinR;sv();hud();
+    luQ.push({lv:S.lv,ban:ld.banR,coin:ld.coinR,nb:ld.unB});
+    if(luQ.length===1)showLU();
+  }
+}
+function showLU(){
+  const q=luQ[0];
+  document.getElementById('lu-n').textContent=q.lv;
+  document.getElementById('lu-rw').innerHTML=`<div class="lu-ch">🍌 +${fmt(q.ban)}</div><div class="lu-ch">🪙 +${fmt(q.coin)}</div>`;
+  document.getElementById('lu-nb').innerHTML=q.nb?`Разблокирован: <b>${q.nb.e} ${q.nb.n}</b>`:'';
+  document.getElementById('lvlup').classList.add('on');confetti();
+}
+function closeLU(){document.getElementById('lvlup').classList.remove('on');luQ.shift();if(luQ.length)setTimeout(showLU,300);}
+
+// ══════════════════════════════════════════
+// LEVELS
+// ══════════════════════════════════════════
+function renderLevels(){
+  document.getElementById('lgrid').innerHTML=LEVELS.map(ld=>{
+    const st=ld.lv<S.lv?'done':ld.lv===S.lv?'cur':'locked';
+    return`<div class="lv-cell ${st}"><div class="lv-n">${ld.lv}</div>
+      <div class="lv-i">${st==='locked'?'🔒':st==='cur'?'▶️':'✅'}</div>
+      <div class="lv-r" style="color:#FFE04060">🍌${fmt(ld.banR)}</div></div>`;
+  }).join('');
+  setTimeout(()=>{const c=document.querySelector('.lv-cell.cur');if(c)c.scrollIntoView({block:'center',behavior:'smooth'});},80);
+}
+
+// ══════════════════════════════════════════
+// BOOK
+// ══════════════════════════════════════════
+let bkf='all';
+function bkF(f,el){bkf=f;document.querySelectorAll('.bfi').forEach(b=>b.classList.remove('on'));el.classList.add('on');renderBook(f);}
+function renderBook(f){
+  const own=BANS.filter(b=>(S.coll[b.id]||0)>0).length;
+  document.getElementById('oc').textContent=own;
+  const list=f==='all'?BANS:f==='owned'?BANS.filter(b=>(S.coll[b.id]||0)>0):BANS.filter(b=>b.r===f);
+  document.getElementById('bgrid').innerHTML=list.map(b=>{
+    const cnt=S.coll[b.id]||0,rr=RR[b.r],unk=!cnt;
+    return`<div class="bc ${unk?'unknown':'owned'}">
+      ${cnt?`<span class="bcc">×${cnt}</span>`:''}
+      <span class="bcl">${b.ulv}</span>
+      <span class="bce">${unk?'❓':b.e}</span>
+      <div class="bcn">${unk?'???':b.n}</div>
+      <div class="bcr" style="color:${rr.c}">${rr.l}</div></div>`;
+  }).join('');
+}
+
+// ══════════════════════════════════════════
+// CASES — modal
+// ══════════════════════════════════════════
+function renderCases(){
+  const tL={common:'Обычный',rare:'Редкий',epic:'Эпический',legendary:'Легендарный',mythic:'Мифический'};
+  const tC={common:'tag-common',rare:'tag-rare',epic:'tag-epic',legendary:'tag-legendary',mythic:'tag-mythic'};
+  document.getElementById('cgrid').innerHTML=CASES.map(c=>`
+    <div class="ccase" onclick="openMod('${c.id}')">
+      <span class="ctag ${tC[c.tag]}">${tL[c.tag]}</span>
+      <span class="ce">${c.e}</span><div class="cn">${c.n}</div>
+      <div class="cd">${c.d}</div><div class="cp">🍌 ${fmt(c.price)}</div></div>`).join('');
+}
+
+let AC=null;
+function openMod(id){
+  AC=CASES.find(c=>c.id===id);
+  document.getElementById('mh2').textContent=AC.e+' '+AC.n;
+  document.getElementById('ms2').textContent=AC.d;
+  document.getElementById('dtb').innerHTML=AC.drops.map(d=>{
+    const rr=RR[d.r];
+    return`<tr><td><span class="rdot" style="background:${rr.c}"></span><span style="color:${rr.c}">${rr.l}</span></td>
+    <td style="color:var(--muted);font-size:.76rem">Бананы данной редкости</td>
+    <td><b style="color:${rr.c}">${d.w}%</b></td></tr>`;
+  }).join('');
+  const btn=document.getElementById('ob');btn.disabled=S.ban<AC.price;
+  btn.textContent=`🎰 ОТКРЫТЬ (${fmt(AC.price)} 🍌)`;
+  document.getElementById('cmod').classList.add('on');
+}
+function closeMod(){document.getElementById('cmod').classList.remove('on');}
+document.getElementById('cmod').addEventListener('click',e=>{if(e.target===document.getElementById('cmod'))closeMod();});
+
+// ══════════════════════════════════════════
+// CS2-STYLE REEL ANIMATION  ← FIXED
+// ══════════════════════════════════════════
+const ITEM_W = 106; // 100px wide + 6px gap
+let wonBan = null;
+let isSpinning = false;
+
+function startSpin(){
+  if(!AC || S.ban < AC.price){ notif('❌ Мало бананов!'); return; }
+  closeMod();
+  S.ban -= AC.price; sv(); hud();
+
+  // ── pick winner ──
+  const tot = AC.drops.reduce((a,d)=>a+d.w, 0);
+  let rand = Math.random()*tot, chosen = AC.drops.at(-1);
+  for(const d of AC.drops){ rand -= d.w; if(rand <= 0){ chosen = d; break; } }
+  const pool = BANS.filter(b => b.r === chosen.r);
+  wonBan = pool[Math.floor(Math.random()*pool.length)];
+
+  // ── build 64 items, winner at index WIN_IDX ──
+  const WIN_IDX = 50, TOTAL = 64;
+  const allPool = AC.drops.flatMap(d => BANS.filter(b => b.r === d.r));
+  const items = Array.from({length: TOTAL}, (_,i) =>
+    i === WIN_IDX ? wonBan : allPool[Math.floor(Math.random()*allPool.length)]
+  );
+
+  const reel = document.getElementById('reel');
+  reel.innerHTML = items.map((b,i) => {
+    const rr = RR[b.r];
+    return `<div class="ri" id="rri${i}" style="border-color:${rr.c}55">
+      <div class="ri-e">${b.e}</div>
+      <div class="ri-n">${b.n}</div>
+      <div class="ri-r" style="background:${rr.c}22;color:${rr.c}">${rr.l}</div>
+    </div>`;
+  }).join('');
+
+  // ── position reel: item 0 centered in view ──
+  const wrap = document.getElementById('reelWrap');
+  const wrapW = wrap.offsetWidth || 480;
+  const startX = wrapW/2 - ITEM_W/2;  // item 0 is centered
+
+  reel.style.transition = 'none';
+  reel.style.transform = `translateX(${startX}px)`;
+
+  // force reflow so the 'none' transition takes effect before next frame
+  reel.getBoundingClientRect();
+
+  // ── reset UI ──
+  document.getElementById('winRes').classList.remove('on');
+  document.getElementById('spinBtn').disabled = false;
+  document.getElementById('spinBtn').textContent = '🎰 Вращать!';
+  document.getElementById('skipBtn').style.display = 'none';
+  document.getElementById('caTitle').textContent = AC.e + ' ' + AC.n;
+  document.getElementById('caAnim').classList.add('on');
+  isSpinning = false;
+}
+
+function triggerSpin(){
+  if(isSpinning) return;
+  isSpinning = true;
+  document.getElementById('spinBtn').disabled = true;
+  document.getElementById('skipBtn').style.display = 'block';
+
+  const WIN_IDX = 50;
+  const wrap = document.getElementById('reelWrap');
+  const wrapW = wrap.offsetWidth || 480;
+
+  // nudge: random offset so winner isn't always dead-center
+  const nudge = (Math.random() - 0.5) * 40;
+  // targetX positions WIN_IDX item at center of wrap
+  const targetX = wrapW/2 - WIN_IDX * ITEM_W - ITEM_W/2 + nudge;
+
+  const reel = document.getElementById('reel');
+  reel.style.transition = 'transform 5.5s cubic-bezier(0.05, 0.85, 0.18, 1)';
+  reel.style.transform = `translateX(${targetX}px)`;
+
+  reel.addEventListener('transitionend', function h(){
+    reel.removeEventListener('transitionend', h);
+    document.getElementById('skipBtn').style.display = 'none';
+    revealWin();
+  }, {once: true});
+}
+
+function skipSpin(){
+  if(!isSpinning) return;
+  const WIN_IDX = 50;
+  const wrap = document.getElementById('reelWrap');
+  const wrapW = wrap.offsetWidth || 480;
+  const targetX = wrapW/2 - WIN_IDX * ITEM_W - ITEM_W/2;
+
+  const reel = document.getElementById('reel');
+  reel.style.transition = 'transform 0.3s ease-out';
+  reel.style.transform = `translateX(${targetX}px)`;
+  setTimeout(() => {
+    document.getElementById('skipBtn').style.display = 'none';
+    revealWin();
+  }, 350);
+}
+
+function revealWin(){
+  const winEl = document.getElementById('rri50');
+  if(winEl) winEl.classList.add('won');
+
+  const rr = RR[wonBan.r];
+  document.getElementById('wrE').textContent = wonBan.e;
+  document.getElementById('wrN').textContent = wonBan.n;
+  const wrR = document.getElementById('wrR');
+  wrR.textContent = rr.l;
+  wrR.style.cssText = `background:${rr.c}22;color:${rr.c};border:1px solid ${rr.c}55;font-size:.9rem;font-weight:700;padding:5px 16px;border-radius:18px;letter-spacing:1px`;
+
+  setTimeout(() => {
+    document.getElementById('winRes').classList.add('on');
+    if(['epic','legendary','mythic'].includes(wonBan.r)) confetti();
+  }, 500);
+}
+
+function collectWin(){
+  document.getElementById('caAnim').classList.remove('on');
+  S.coll[wonBan.id] = (S.coll[wonBan.id]||0) + 1;
+  const xp = Math.floor(50 * {common:.5, uncommon:1, rare:2.5, epic:7, legendary:20, mythic:60}[wonBan.r]);
+  S.xp += xp; sv(); checkLvlUp(); hud(); renderBook(bkf);
+  notif(`✅ Получен: ${wonBan.e} ${wonBan.n}!`);
+  isSpinning = false; wonBan = null;
+}
+
+// ══════════════════════════════════════════
+// DAILY
+// ══════════════════════════════════════════
+const today=()=>new Date().toISOString().slice(0,10);
+function renderDaily(){
+  const al=DL.last===today(),sk=DL.streak||0,di=sk%7;
+  document.getElementById('dlbl').textContent=sk>0?`🔥 ${sk} дней`:'';
+  document.getElementById('dhint').innerHTML=al?'✅ Уже получено сегодня! Заходи завтра':sk>0?`🔥 Серия <b>${sk}</b> дней!`:'👆 Нажми на сегодняшний подарок!';
+  document.getElementById('ddays').innerHTML=DAILYG.map((g,i)=>{
+    const isT=i===di&&!al,cl=(DL.claimed||[]).includes(i+1),lk=i>di&&!cl;
+    return`<div class="dd${cl?' claimed':isT?' today':lk?' locked':''}" ${isT?`onclick="claimD(${i})"`:''}><div class="dn">День ${i+1}</div><div class="de">${g.e}</div><div class="dr">${g.r}</div></div>`;
+  }).join('');
+}
+function claimD(i){
+  const g=DAILYG[i];
+  if(g.t==='ban'){S.ban+=g.v;notif(`🎁 +${g.v} 🍌`);}
+  else if(g.t==='coin'){S.coins+=g.v;notif(`🎁 +${g.v} 🪙`);}
+  else{
+    // for daily case rewards: pick the case and go straight to spin
+    AC=CASES.find(c=>c.id===g.v);
+    if(AC){
+      // temporarily give bananas so spin doesn't fail, then restore
+      const savedBan=S.ban;
+      S.ban=AC.price;
+      startSpin();
+      // startSpin deducts price, so we restore minus that deduction
+    }
+  }
+  if(!DL.claimed)DL.claimed=[];DL.claimed.push(i+1);DL.streak=(DL.streak||0)+1;DL.last=today();
+  sdl();sv();hud();renderDaily();if(g.t!=='case')confetti();
+}
+
+// ══════════════════════════════════════════
+// FX
+// ══════════════════════════════════════════
+function floatFx(txt,x,y,col){
+  const el=document.createElement('div');el.className='ffx';
+  el.style.cssText=`left:${x-20}px;top:${y-30}px;color:${col};font-size:.82rem`;
+  el.textContent=txt;document.body.appendChild(el);setTimeout(()=>el.remove(),880);
+}
+function confetti(){
+  const cols=['#FFE040','#FFAB00','#FF6D00','#B794F4','#40C4FF','#39FF9A','#FF6DD5'];
+  for(let i=0;i<70;i++)setTimeout(()=>{
+    const el=document.createElement('div');el.className='cp';
+    el.style.cssText=`left:${Math.random()*100}vw;top:-6px;background:${cols[i%7]};animation-duration:${2+Math.random()*2.2}s;animation-delay:${Math.random()*.3}s`;
+    document.body.appendChild(el);setTimeout(()=>el.remove(),4500);
+  },i*15);
+}
+let ntmr=null;
+function notif(t){const n=document.getElementById('ntf');n.textContent=t;n.classList.add('on');clearTimeout(ntmr);ntmr=setTimeout(()=>n.classList.remove('on'),2400);}
+
+// ══════════════════════════════════════════
+// STAR BACKGROUND
+// ══════════════════════════════════════════
+(()=>{
+  const cv=document.getElementById('stars'),ctx=cv.getContext('2d');
+  let W,H,stars=[];
+  const rsz=()=>{W=cv.width=innerWidth;H=cv.height=innerHeight;stars=Array.from({length:130},()=>({x:Math.random()*W,y:Math.random()*H,r:.2+Math.random()*1.1,a:Math.random(),s:.001+Math.random()*.003}));};
+  window.addEventListener('resize',rsz);rsz();
+  (function loop(){ctx.clearRect(0,0,W,H);stars.forEach(s=>{s.a+=s.s;if(s.a>1||s.a<0)s.s*=-1;ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,Math.PI*2);ctx.fillStyle=`rgba(255,255,200,${s.a*.5})`;ctx.fill();});requestAnimationFrame(loop);})();
+})();
+
+// ══════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════
+hud();renderUpgrades();renderCases();renderDaily();renderBook('all');renderLevels();
+</script>
+</body>
+</html>
